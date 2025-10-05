@@ -33,22 +33,22 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [user]);
+  }, []);
 
   const fetchDashboardData = async () => {
-    if (!user) return;
-
     setLoading(true);
 
-    // Fetch joined clubs
-    const { data: memberships } = await supabase
-      .from('club_members')
-      .select('clubs(id, name, category, banner_url)')
-      .eq('user_id', user.id)
-      .eq('status', 'active');
+    // Fetch joined clubs if user is logged in
+    if (user) {
+      const { data: memberships } = await supabase
+        .from('club_members')
+        .select('clubs(id, name, category, banner_url)')
+        .eq('user_id', user.id)
+        .eq('status', 'active');
 
-    if (memberships) {
-      setJoinedClubs(memberships.map((m: any) => m.clubs));
+      if (memberships) {
+        setJoinedClubs(memberships.map((m: any) => m.clubs));
+      }
     }
 
     // Fetch upcoming events
@@ -68,9 +68,9 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="bg-primary text-primary-foreground p-6 rounded-b-3xl shadow-lg">
+      <header className="bg-gradient-to-br from-primary via-primary to-primary-dark text-primary-foreground p-6 rounded-b-3xl shadow-xl">
         <h1 className="text-2xl font-bold mb-2">Welcome back!</h1>
-        <p className="text-primary-foreground/80">Discover clubs and events</p>
+        <p className="text-primary-foreground/90">Discover clubs and events tailored for you</p>
         
         <div className="mt-4 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -79,7 +79,7 @@ const Dashboard = () => {
             placeholder="Search clubs and events..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white"
+            className="pl-10 bg-card border-0 shadow-md"
           />
         </div>
       </header>

@@ -150,25 +150,35 @@ const ClubDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-6">
-      <div className="bg-primary text-primary-foreground p-6 rounded-b-3xl shadow-lg mb-6">
+      {club.banner_url && (
+        <div className="h-48 overflow-hidden">
+          <img 
+            src={club.banner_url} 
+            alt={club.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      
+      <div className="bg-gradient-to-br from-primary via-primary to-primary-dark text-primary-foreground p-6 shadow-lg mb-6 -mt-12 mx-4 rounded-2xl">
         <div className="flex items-center justify-between mb-4">
           <Link to="/clubs">
-            <Button variant="ghost" size="icon" className="text-primary-foreground">
+            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/20">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           {isLeader && (
             <Link to={`/manage/${clubId}`}>
-              <Button variant="ghost" size="icon" className="text-primary-foreground">
+              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/20">
                 <Settings className="h-5 w-5" />
               </Button>
             </Link>
           )}
         </div>
         
-        <Badge className="mb-3 capitalize">{club.category}</Badge>
+        <Badge className="mb-3 capitalize bg-accent text-accent-foreground">{club.category}</Badge>
         <h1 className="text-3xl font-bold mb-2">{club.name}</h1>
-        <div className="flex items-center gap-4 text-sm text-primary-foreground/80">
+        <div className="flex items-center gap-4 text-sm text-primary-foreground/90">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             <span>{memberCount} members</span>
@@ -234,13 +244,16 @@ const ClubDetail = () => {
         </Card>
 
         {user && (
-          <Button
-            className="w-full"
-            variant={isMember ? 'outline' : 'default'}
-            onClick={handleJoinLeave}
-          >
-            {isMember ? 'Leave Club' : 'Join Club'}
-          </Button>
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border">
+            <Button
+              className="w-full shadow-lg"
+              size="lg"
+              variant={isMember ? 'outline' : 'default'}
+              onClick={handleJoinLeave}
+            >
+              {isMember ? 'Leave Club' : 'Join Club'}
+            </Button>
+          </div>
         )}
       </div>
     </div>
