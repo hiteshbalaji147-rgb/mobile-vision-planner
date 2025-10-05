@@ -58,7 +58,7 @@ export type Database = {
           banner_url: string | null
           category: Database["public"]["Enums"]["club_category"]
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           faculty_coordinator: string | null
           id: string
@@ -69,7 +69,7 @@ export type Database = {
           banner_url?: string | null
           category: Database["public"]["Enums"]["club_category"]
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           faculty_coordinator?: string | null
           id?: string
@@ -80,7 +80,7 @@ export type Database = {
           banner_url?: string | null
           category?: Database["public"]["Enums"]["club_category"]
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           faculty_coordinator?: string | null
           id?: string
@@ -141,7 +141,7 @@ export type Database = {
           banner_url: string | null
           club_id: string
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           event_date: string
           id: string
@@ -155,7 +155,7 @@ export type Database = {
           banner_url?: string | null
           club_id: string
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           event_date: string
           id?: string
@@ -169,7 +169,7 @@ export type Database = {
           banner_url?: string | null
           club_id?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           event_date?: string
           id?: string
