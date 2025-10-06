@@ -65,16 +65,22 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold text-primary">ClubTuner</CardTitle>
-          <CardDescription>Login to your account</CardDescription>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted p-4">
+      <Card className="w-full max-w-md shadow-xl border-border/50 overflow-hidden">
+        <div className="bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground p-8 text-center">
+          <h1 className="text-4xl font-bold mb-2">ClubTuner</h1>
+          <p className="text-primary-foreground/90 text-sm">Discover & Connect with Campus Clubs</p>
+        </div>
+        
+        <CardHeader className="space-y-1 text-center pt-6">
+          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+          <CardDescription>Login to continue your journey</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+        
+        <CardContent className="px-8">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">College Email</Label>
+              <Label htmlFor="email" className="text-foreground font-medium">College Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -82,33 +88,46 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="border-border bg-background focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-foreground font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="border-border bg-background focus:ring-2 focus:ring-primary/20"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md h-11 font-semibold" 
+              disabled={loading}
+            >
               {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+        
+        <CardFooter className="flex flex-col space-y-3 pb-8 px-8 pt-2">
+          <Link 
+            to="/forgot-password" 
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
+          >
             Forgot Password?
           </Link>
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-primary hover:underline">
-              Sign Up
-            </Link>
-          </p>
+          <div className="pt-4 border-t border-border w-full text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <Link to="/signup" className="text-primary hover:text-primary/80 font-semibold transition-colors">
+                Sign Up
+              </Link>
+            </p>
+          </div>
         </CardFooter>
       </Card>
     </div>
