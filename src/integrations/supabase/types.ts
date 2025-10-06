@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          badge_type: string
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          points_required: number
+        }
+        Insert: {
+          badge_type: string
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          points_required?: number
+        }
+        Update: {
+          badge_type?: string
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          points_required?: number
+        }
+        Relationships: []
+      }
       club_members: {
         Row: {
           club_id: string
@@ -42,6 +72,13 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
             referencedColumns: ["id"]
           },
           {
@@ -92,6 +129,13 @@ export type Database = {
             foreignKeyName: "clubs_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clubs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -100,23 +144,35 @@ export type Database = {
       event_registrations: {
         Row: {
           attended: boolean | null
+          checked_in_at: string | null
           event_id: string
           id: string
+          payment_status: string | null
+          qr_code: string | null
           registered_at: string
+          ticket_price: number | null
           user_id: string
         }
         Insert: {
           attended?: boolean | null
+          checked_in_at?: string | null
           event_id: string
           id?: string
+          payment_status?: string | null
+          qr_code?: string | null
           registered_at?: string
+          ticket_price?: number | null
           user_id: string
         }
         Update: {
           attended?: boolean | null
+          checked_in_at?: string | null
           event_id?: string
           id?: string
+          payment_status?: string | null
+          qr_code?: string | null
           registered_at?: string
+          ticket_price?: number | null
           user_id?: string
         }
         Relationships: [
@@ -125,6 +181,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
             referencedColumns: ["id"]
           },
           {
@@ -191,6 +254,13 @@ export type Database = {
             foreignKeyName: "events_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -249,6 +319,13 @@ export type Database = {
             foreignKeyName: "gallery_items_uploaded_by_fkey"
             columns: ["uploaded_by"]
             isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_items_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -290,6 +367,13 @@ export type Database = {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -322,6 +406,65 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_points: {
+        Row: {
+          activity_id: string | null
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          activity_id?: string | null
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          user_id: string
+        }
+        Update: {
+          activity_id?: string | null
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -346,6 +489,13 @@ export type Database = {
             foreignKeyName: "user_roles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -353,9 +503,34 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      leaderboard: {
+        Row: {
+          achievements_earned: number | null
+          avatar_url: string | null
+          clubs_joined: number | null
+          events_attended: number | null
+          full_name: string | null
+          id: string | null
+          total_points: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      award_points: {
+        Args: {
+          _activity_id: string
+          _activity_type: string
+          _description: string
+          _points: number
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      get_user_total_points: {
+        Args: { _user_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
