@@ -1,4 +1,4 @@
-import { Home, Users, Calendar, Bell, User } from 'lucide-react';
+import { Home, Users, Calendar, Trophy, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -6,7 +6,7 @@ const navItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Users, label: 'Clubs', path: '/clubs' },
   { icon: Calendar, label: 'Events', path: '/events' },
-  { icon: Bell, label: 'Notifications', path: '/notifications' },
+  { icon: Trophy, label: 'Ranks', path: '/leaderboard' },
   { icon: User, label: 'Profile', path: '/profile' },
 ];
 

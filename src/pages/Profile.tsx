@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogOut, Settings } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import UserAchievements from '@/components/UserAchievements';
 
 interface Profile {
   full_name: string;
@@ -116,6 +117,8 @@ const Profile = () => {
       </header>
 
       <main className="p-6 space-y-6">
+        <UserAchievements />
+
         <Card>
           <CardHeader>
             <CardTitle>My Clubs</CardTitle>
