@@ -24,20 +24,33 @@ const EventTicket = ({ registrationId, eventTitle, eventDate, venue }: EventTick
 
   const generateQRCode = async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("generate-qr-code", {
-      body: { registrationId },
-    });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
-    if (error) {
+      const { data, error } = await supabase.functions.invoke("generate-qr-code", {
+        body: { registrationId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.qrCode) {
+        setQrCode(data.qrCode);
+      }
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to generate QR code",
         variant: "destructive",
       });
-    } else if (data?.qrCode) {
-      setQrCode(data.qrCode);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const downloadTicket = () => {

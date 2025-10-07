@@ -494,6 +494,10 @@ export type Database = {
         Args: { _club_id: string; _user_id: string }
         Returns: boolean
       }
+      verify_registration_owner: {
+        Args: { _registration_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "student" | "club_leader" | "admin"

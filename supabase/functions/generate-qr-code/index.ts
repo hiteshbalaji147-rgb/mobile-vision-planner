@@ -6,31 +6,81 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// HMAC signing for QR code security
+async function signQRCode(data: string): Promise<string> {
+  const secret = Deno.env.get("QR_SECRET") || "default-secret-change-me";
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
+  return btoa(String.fromCharCode(...new Uint8Array(signature)));
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    const { registrationId } = await req.json();
-
-    if (!registrationId) {
-      throw new Error("Registration ID is required");
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      throw new Error("Missing authorization header");
     }
 
-    // Generate QR code data (encrypted registration ID)
-    const qrData = btoa(`EVENT_CHECKIN:${registrationId}:${Date.now()}`);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error("Unauthorized");
+    }
+
+    const body = await req.json();
+    const { registrationId } = body;
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!registrationId || !uuidRegex.test(registrationId)) {
+      throw new Error("Invalid registration ID format");
+    }
+
+    // Verify user owns this registration
+    const { data: registration, error: regError } = await supabase
+      .from("event_registrations")
+      .select("user_id")
+      .eq("id", registrationId)
+      .single();
+
+    if (regError || !registration) {
+      throw new Error("Registration not found");
+    }
+
+    if (registration.user_id !== user.id) {
+      throw new Error("Unauthorized: You don't own this registration");
+    }
+
+    // Generate signed QR code with expiration (24 hours)
+    const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
+    const qrPayload = `${registrationId}:${expiresAt}`;
+    const signature = await signQRCode(qrPayload);
+    const qrData = btoa(`${qrPayload}:${signature}`);
 
     // Update registration with QR code
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from("event_registrations")
       .update({ qr_code: qrData })
       .eq("id", registrationId);
 
-    if (error) throw error;
+    if (updateError) throw updateError;
+
+    console.log(`QR code generated for registration ${registrationId}`);
 
     return new Response(
       JSON.stringify({ qrCode: qrData }),
@@ -40,7 +90,7 @@ serve(async (req) => {
     console.error("Error generating QR code:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: error instanceof Error && error.message === "Unauthorized" ? 401 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
