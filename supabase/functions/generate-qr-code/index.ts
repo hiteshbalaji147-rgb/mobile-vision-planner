@@ -6,9 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// HMAC signing for QR code security
+// HMAC signing for QR codes
 async function signQRCode(data: string): Promise<string> {
-  const secret = Deno.env.get("QR_SECRET") || "default-secret-change-me";
+  const secret = Deno.env.get("QR_SECRET") || "default-secret-change-in-production";
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -25,6 +25,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Extract and verify JWT token
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       throw new Error("Missing authorization header");
@@ -36,14 +37,12 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new Error("Unauthorized");
     }
 
-    const body = await req.json();
-    const { registrationId } = body;
+    const { registrationId } = await req.json();
 
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -51,29 +50,32 @@ serve(async (req) => {
       throw new Error("Invalid registration ID format");
     }
 
+    // Use service role key for the ownership check and update
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     // Verify user owns this registration
-    const { data: registration, error: regError } = await supabase
+    const { data: registration, error: checkError } = await supabaseAdmin
       .from("event_registrations")
       .select("user_id")
       .eq("id", registrationId)
       .single();
 
-    if (regError || !registration) {
-      throw new Error("Registration not found");
+    if (checkError || !registration || registration.user_id !== user.id) {
+      throw new Error("Registration not found or unauthorized");
     }
 
-    if (registration.user_id !== user.id) {
-      throw new Error("Unauthorized: You don't own this registration");
-    }
-
-    // Generate signed QR code with expiration (24 hours)
-    const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
-    const qrPayload = `${registrationId}:${expiresAt}`;
+    // Generate signed QR code
+    const timestamp = Date.now();
+    const expiresAt = timestamp + (24 * 60 * 60 * 1000); // 24 hours
+    const qrPayload = `${registrationId}:${timestamp}:${expiresAt}`;
     const signature = await signQRCode(qrPayload);
     const qrData = btoa(`${qrPayload}:${signature}`);
 
     // Update registration with QR code
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from("event_registrations")
       .update({ qr_code: qrData })
       .eq("id", registrationId);

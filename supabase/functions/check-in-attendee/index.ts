@@ -7,38 +7,49 @@ const corsHeaders = {
 };
 
 // Verify HMAC signature
-async function verifyQRCode(qrData: string): Promise<{ registrationId: string; expiresAt: number } | null> {
+async function verifyQRCode(qrData: string): Promise<{ registrationId: string; timestamp: number; expiresAt: number } | null> {
   try {
     const decoded = atob(qrData);
     const parts = decoded.split(":");
-    if (parts.length !== 3) return null;
-
-    const [registrationId, expiresAt, providedSignature] = parts;
-
-    // Check expiration
-    if (Date.now() > parseInt(expiresAt)) {
-      throw new Error("QR code has expired");
-    }
-
+    
+    if (parts.length !== 4) return null;
+    
+    const [registrationId, timestamp, expiresAt, providedSignature] = parts;
+    const payload = `${registrationId}:${timestamp}:${expiresAt}`;
+    
     // Verify signature
-    const secret = Deno.env.get("QR_SECRET") || "default-secret-change-me";
+    const secret = Deno.env.get("QR_SECRET") || "default-secret-change-in-production";
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
       "raw",
       encoder.encode(secret),
       { name: "HMAC", hash: "SHA-256" },
       false,
-      ["sign"]
+      ["verify"]
     );
-    const payload = `${registrationId}:${expiresAt}`;
-    const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
-    const expectedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)));
-
-    if (expectedSignature !== providedSignature) {
-      throw new Error("Invalid QR code signature");
+    
+    const signatureBytes = Uint8Array.from(atob(providedSignature), c => c.charCodeAt(0));
+    const isValid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      signatureBytes,
+      encoder.encode(payload)
+    );
+    
+    if (!isValid) return null;
+    
+    // Check expiration
+    const now = Date.now();
+    const expiresAtNum = parseInt(expiresAt);
+    if (now > expiresAtNum) {
+      throw new Error("QR code has expired");
     }
-
-    return { registrationId, expiresAt: parseInt(expiresAt) };
+    
+    return {
+      registrationId,
+      timestamp: parseInt(timestamp),
+      expiresAt: expiresAtNum
+    };
   } catch (error) {
     console.error("QR verification error:", error);
     return null;
@@ -49,6 +60,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Verify authentication
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       throw new Error("Missing authorization header");
@@ -60,42 +72,35 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new Error("Unauthorized");
     }
 
-    const body = await req.json();
-    const { qrCode } = body;
+    const { qrCode } = await req.json();
 
     if (!qrCode || typeof qrCode !== "string") {
-      throw new Error("Invalid QR code");
+      throw new Error("Invalid QR code format");
     }
 
     // Verify and decode QR code
-    const verified = await verifyQRCode(qrCode);
-    if (!verified) {
-      throw new Error("Invalid or expired QR code");
+    const qrData = await verifyQRCode(qrCode);
+    if (!qrData) {
+      throw new Error("Invalid or tampered QR code");
     }
 
-    const { registrationId } = verified;
+    const { registrationId } = qrData;
+
+    // Use service role for database operations
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
     // Verify user is a club leader for this event
-    const { data: registration, error: regError } = await supabase
+    const { data: registration, error: regError } = await supabaseAdmin
       .from("event_registrations")
-      .select(`
-        id,
-        user_id,
-        checked_in_at,
-        event_id,
-        events!inner (
-          club_id,
-          clubs!inner (
-            created_by
-          )
-        )
-      `)
+      .select("event_id, user_id, checked_in_at, events(club_id)")
       .eq("id", registrationId)
       .eq("qr_code", qrCode)
       .single();
@@ -107,35 +112,20 @@ serve(async (req) => {
     // Check if already checked in
     if (registration.checked_in_at) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Already checked in",
-          registration 
-        }),
+        JSON.stringify({ success: false, error: "Already checked in", registration }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify user is club leader (using service role for the update)
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // Verify user is club leader (RLS will also check this)
+    const { data: isLeader } = await supabaseAdmin
+      .rpc("is_club_leader", { 
+        _user_id: user.id, 
+        _club_id: (registration.events as any).club_id 
+      });
 
-    // Check if user is club leader
-    const clubCreator = (registration.events as any).clubs.created_by;
-    if (clubCreator !== user.id) {
-      // Also check if user is admin
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .single();
-
-      if (!roles) {
-        throw new Error("Unauthorized: Only club leaders can check in attendees");
-      }
+    if (!isLeader) {
+      throw new Error("Only club leaders can check in attendees");
     }
 
     // Check in the attendee
@@ -143,6 +133,7 @@ serve(async (req) => {
       .from("event_registrations")
       .update({ checked_in_at: new Date().toISOString() })
       .eq("id", registrationId)
+      .eq("qr_code", qrCode)
       .select()
       .single();
 
@@ -156,9 +147,11 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error checking in attendee:", error);
+    const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 
+                   error instanceof Error && error.message.includes("QR code has expired") ? 410 : 500;
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: error instanceof Error && error.message.includes("Unauthorized") ? 401 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
