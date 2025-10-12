@@ -344,6 +344,11 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          profile_visibility: string | null
+          show_achievements: boolean | null
+          show_clubs: boolean | null
+          show_email: boolean | null
+          show_events: boolean | null
           updated_at: string
         }
         Insert: {
@@ -352,6 +357,11 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          profile_visibility?: string | null
+          show_achievements?: boolean | null
+          show_clubs?: boolean | null
+          show_email?: boolean | null
+          show_events?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -360,6 +370,11 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          profile_visibility?: string | null
+          show_achievements?: boolean | null
+          show_clubs?: boolean | null
+          show_email?: boolean | null
+          show_events?: boolean | null
           updated_at?: string
         }
         Relationships: []

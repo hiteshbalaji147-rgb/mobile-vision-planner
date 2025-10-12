@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { AppQRCode } from '@/components/AppQRCode';
+import { PrivacySettings } from '@/components/PrivacySettings';
 
 const Settings = () => {
   return (
@@ -32,16 +33,7 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Privacy Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Privacy settings coming soon
-            </p>
-          </CardContent>
-        </Card>
+        <PrivacySettings />
 
         <Card>
           <CardHeader>
