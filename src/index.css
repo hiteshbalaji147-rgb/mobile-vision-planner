@@ -4,47 +4,47 @@
 
 @layer base {
   :root {
-    /* Amazon-inspired Color System */
-    --primary: 203 89% 25%;         /* Amazon Blue #146EB4 */
+    /* Light Blue Color System */
+    --primary: 200 85% 45%;         /* Medium Blue */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 203 89% 20%;
+    --primary-hover: 200 85% 35%;
     
-    --secondary: 0 0% 20%;          /* Dark Gray */
+    --secondary: 200 70% 60%;       /* Light Blue */
     --secondary-foreground: 0 0% 100%;
     
-    --accent: 36 100% 50%;          /* Amazon Orange #FF9900 */
-    --accent-foreground: 0 0% 0%;
+    --accent: 195 100% 40%;         /* Bright Blue */
+    --accent-foreground: 0 0% 100%;
     
-    --background: 0 0% 100%;        /* White */
-    --foreground: 0 0% 13%;         /* Almost Black #232F3E */
+    --background: 200 70% 96%;      /* Very Light Blue */
+    --foreground: 200 30% 15%;      /* Dark Blue */
     
-    --card: 0 0% 100%;              /* White Card */
-    --card-foreground: 0 0% 13%;
+    --card: 200 60% 98%;            /* Almost White Blue */
+    --card-foreground: 200 30% 15%;
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover: 200 60% 98%;
+    --popover-foreground: 200 30% 15%;
     
-    --muted: 210 20% 96%;           /* Light Gray */
-    --muted-foreground: 0 0% 40%;
+    --muted: 200 50% 90%;           /* Soft Blue */
+    --muted-foreground: 200 20% 40%;
     
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 203 89% 25%;
+    --border: 200 40% 85%;
+    --input: 200 40% 85%;
+    --ring: 200 85% 45%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --radius: 0.375rem;
+    --radius: 0.5rem;
     
-    /* Amazon Gradients */
-    --gradient-header: linear-gradient(180deg, hsl(203 89% 25%), hsl(203 89% 20%));
-    --gradient-orange: linear-gradient(135deg, hsl(36 100% 50%), hsl(36 100% 45%));
+    /* Light Blue Gradients */
+    --gradient-header: linear-gradient(180deg, hsl(200 85% 45%), hsl(200 85% 35%));
+    --gradient-accent: linear-gradient(135deg, hsl(195 100% 40%), hsl(200 85% 45%));
     
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 4px 8px 0 rgba(0, 0, 0, 0.12);
-    --shadow-xl: 0 8px 16px 0 rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 1px 2px 0 rgba(66, 153, 225, 0.08);
+    --shadow-md: 0 2px 4px 0 rgba(66, 153, 225, 0.12);
+    --shadow-lg: 0 4px 8px 0 rgba(66, 153, 225, 0.15);
+    --shadow-xl: 0 8px 16px 0 rgba(66, 153, 225, 0.18);
   }
 
   .dark {
