@@ -28,7 +28,11 @@ serve(async (req) => {
     // Extract and verify JWT token
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      throw new Error("Missing authorization header");
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: "Authentication failed" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const supabase = createClient(
@@ -39,7 +43,11 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      throw new Error("Unauthorized");
+      console.error("Authentication failed:", authError);
+      return new Response(
+        JSON.stringify({ error: "Authentication failed" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const { registrationId } = await req.json();
@@ -47,7 +55,11 @@ serve(async (req) => {
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!registrationId || !uuidRegex.test(registrationId)) {
-      throw new Error("Invalid registration ID format");
+      console.error("Invalid registration ID format");
+      return new Response(
+        JSON.stringify({ error: "Invalid request" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Use service role key for the ownership check and update
@@ -64,7 +76,11 @@ serve(async (req) => {
       .single();
 
     if (checkError || !registration || registration.user_id !== user.id) {
-      throw new Error("Registration not found or unauthorized");
+      console.error("Registration ownership verification failed:", checkError);
+      return new Response(
+        JSON.stringify({ error: "Authentication failed" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Generate signed QR code
@@ -80,7 +96,13 @@ serve(async (req) => {
       .update({ qr_code: qrData })
       .eq("id", registrationId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error("Failed to update registration with QR code:", updateError);
+      return new Response(
+        JSON.stringify({ error: "Operation failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log(`QR code generated for registration ${registrationId}`);
 
@@ -89,10 +111,13 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    // Log detailed error server-side only
     console.error("Error generating QR code:", error);
+    
+    // Return generic error to client
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: error instanceof Error && error.message === "Unauthorized" ? 401 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Operation failed" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

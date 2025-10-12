@@ -63,7 +63,11 @@ serve(async (req) => {
     // Verify authentication
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      throw new Error("Missing authorization header");
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: "Authentication failed" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const supabase = createClient(
@@ -74,19 +78,31 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      throw new Error("Unauthorized");
+      console.error("Authentication failed:", authError);
+      return new Response(
+        JSON.stringify({ error: "Authentication failed" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const { qrCode } = await req.json();
 
     if (!qrCode || typeof qrCode !== "string") {
-      throw new Error("Invalid QR code format");
+      console.error("Invalid QR code format");
+      return new Response(
+        JSON.stringify({ error: "Invalid request" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Verify and decode QR code
     const qrData = await verifyQRCode(qrCode);
     if (!qrData) {
-      throw new Error("Invalid or tampered QR code");
+      console.error("Invalid or tampered QR code");
+      return new Response(
+        JSON.stringify({ error: "Invalid request" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const { registrationId } = qrData;
@@ -106,7 +122,11 @@ serve(async (req) => {
       .single();
 
     if (regError || !registration) {
-      throw new Error("Registration not found");
+      console.error("Registration not found:", regError);
+      return new Response(
+        JSON.stringify({ error: "Invalid request" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Check if already checked in
@@ -125,7 +145,11 @@ serve(async (req) => {
       });
 
     if (!isLeader) {
-      throw new Error("Only club leaders can check in attendees");
+      console.error("User is not a club leader");
+      return new Response(
+        JSON.stringify({ error: "Authentication failed" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Check in the attendee
@@ -137,7 +161,13 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Failed to check in attendee:", error);
+      return new Response(
+        JSON.stringify({ error: "Operation failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log(`Attendee checked in: ${registrationId} by ${user.id}`);
 
@@ -146,12 +176,13 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    // Log detailed error server-side only
     console.error("Error checking in attendee:", error);
-    const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 
-                   error instanceof Error && error.message.includes("QR code has expired") ? 410 : 500;
+    
+    // Return generic error to client
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Operation failed" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
