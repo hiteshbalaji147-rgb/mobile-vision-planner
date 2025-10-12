@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
+import { AppQRCode } from '@/components/AppQRCode';
 
 const Settings = () => {
   return (
@@ -18,6 +19,8 @@ const Settings = () => {
       </header>
 
       <main className="px-6 space-y-6">
+        <AppQRCode />
+        
         <Card>
           <CardHeader>
             <CardTitle>Notification Preferences</CardTitle>
