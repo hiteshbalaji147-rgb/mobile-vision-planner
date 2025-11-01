@@ -5,9 +5,12 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Users, Calendar, Settings } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Users, Calendar, Settings, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import RoleManagement from '@/components/RoleManagement';
+import { useNavigate } from 'react-router-dom';
 
 interface Club {
   id: string;
@@ -30,6 +33,7 @@ const ClubDetail = () => {
   const { clubId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [club, setClub] = useState<Club | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [isMember, setIsMember] = useState(false);
@@ -168,11 +172,21 @@ const ClubDetail = () => {
             </Button>
           </Link>
           {isLeader && (
-            <Link to={`/manage/${clubId}`}>
-              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/20">
-                <Settings className="h-5 w-5" />
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-primary-foreground hover:bg-primary-foreground/20"
+                onClick={() => navigate(`/clubs/${clubId}/analytics`)}
+              >
+                <TrendingUp className="h-5 w-5" />
               </Button>
-            </Link>
+              <Link to={`/manage/${clubId}`}>
+                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/20">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
         
@@ -187,61 +201,79 @@ const ClubDetail = () => {
       </div>
 
       <div className="px-6 space-y-6">
-        {club.description && (
-          <Card>
-            <CardHeader>
-              <CardTitle>About</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{club.description}</p>
-            </CardContent>
-          </Card>
-        )}
+        <Tabs defaultValue="about" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+            {isLeader && <TabsTrigger value="manage">Manage</TabsTrigger>}
+          </TabsList>
 
-        {club.faculty_coordinator && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Faculty Coordinator</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{club.faculty_coordinator}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Upcoming Events
-              </CardTitle>
-              <Link to="/events">
-                <Button variant="ghost" size="sm">View All</Button>
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {events.length > 0 ? (
-              <div className="space-y-3">
-                {events.map((event) => (
-                  <Link key={event.id} to={`/events/${event.id}`}>
-                    <div className="p-3 rounded-lg hover:bg-muted transition-colors">
-                      <h3 className="font-semibold">{event.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(event.event_date).toLocaleDateString()} • {event.venue}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-4">
-                No upcoming events
-              </p>
+          <TabsContent value="about" className="space-y-6 mt-6">
+            {club.description && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>About</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{club.description}</p>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
+
+            {club.faculty_coordinator && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Faculty Coordinator</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>{club.faculty_coordinator}</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="events" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Upcoming Events
+                  </CardTitle>
+                  <Link to="/events">
+                    <Button variant="ghost" size="sm">View All</Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {events.length > 0 ? (
+                  <div className="space-y-3">
+                    {events.map((event) => (
+                      <Link key={event.id} to={`/events/${event.id}`}>
+                        <div className="p-3 rounded-lg hover:bg-muted transition-colors">
+                          <h3 className="font-semibold">{event.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(event.event_date).toLocaleDateString()} • {event.venue}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">
+                    No upcoming events
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {isLeader && clubId && (
+            <TabsContent value="manage" className="space-y-6 mt-6">
+              <RoleManagement clubId={clubId} />
+            </TabsContent>
+          )}
+        </Tabs>
 
         {user && (
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border">

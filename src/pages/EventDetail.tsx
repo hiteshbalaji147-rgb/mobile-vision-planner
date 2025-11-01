@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, MapPin, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import CalendarSync from '@/components/CalendarSync';
 
 interface Event {
   id: string;
@@ -18,6 +19,8 @@ interface Event {
   max_capacity: number | null;
   status: string;
   club_id: string;
+  google_calendar_id: string | null;
+  outlook_event_id: string | null;
   clubs: { name: string };
 }
 
@@ -192,6 +195,16 @@ const EventDetail = () => {
             </CardContent>
           </Card>
         )}
+
+        <CalendarSync
+          eventId={event.id}
+          eventTitle={event.title}
+          eventDate={event.event_date}
+          venue={event.venue}
+          description={event.description || undefined}
+          googleCalendarId={event.google_calendar_id}
+          outlookEventId={event.outlook_event_id}
+        />
 
         {user && !isPastEvent && (
           <Button

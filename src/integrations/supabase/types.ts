@@ -83,6 +83,41 @@ export type Database = {
           },
         ]
       }
+      club_roles: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          club_id: string
+          id: string
+          role: Database["public"]["Enums"]["club_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          club_id: string
+          id?: string
+          role?: Database["public"]["Enums"]["club_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          club_id?: string
+          id?: string
+          role?: Database["public"]["Enums"]["club_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_roles_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubs: {
         Row: {
           banner_url: string | null
@@ -186,8 +221,10 @@ export type Database = {
           created_by: string | null
           description: string | null
           event_date: string
+          google_calendar_id: string | null
           id: string
           max_capacity: number | null
+          outlook_event_id: string | null
           status: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at: string
@@ -200,8 +237,10 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           event_date: string
+          google_calendar_id?: string | null
           id?: string
           max_capacity?: number | null
+          outlook_event_id?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at?: string
@@ -214,8 +253,10 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           event_date?: string
+          google_calendar_id?: string | null
           id?: string
           max_capacity?: number | null
+          outlook_event_id?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           title?: string
           updated_at?: string
@@ -482,8 +523,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_club_analytics: {
+        Args: { _club_id: string; _days?: number }
+        Returns: {
+          active_members: number
+          avg_attendance: number
+          event_participation: Json
+          member_growth: Json
+          total_attendees: number
+          total_events: number
+          total_members: number
+          upcoming_events: number
+        }[]
+      }
       get_leaderboard: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           achievements_earned: number
           avatar_url: string
@@ -494,15 +548,24 @@ export type Database = {
           total_points: number
         }[]
       }
-      get_user_total_points: {
-        Args: { _user_id: string }
-        Returns: number
+      get_user_total_points: { Args: { _user_id: string }; Returns: number }
+      has_club_role: {
+        Args: {
+          _club_id: string
+          _role: Database["public"]["Enums"]["club_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_club_admin: {
+        Args: { _club_id: string; _user_id: string }
         Returns: boolean
       }
       is_club_leader: {
@@ -523,6 +586,7 @@ export type Database = {
         | "academic"
         | "social"
         | "other"
+      club_role: "president" | "secretary" | "member" | "faculty_coordinator"
       event_status: "upcoming" | "ongoing" | "completed" | "cancelled"
       membership_status: "pending" | "active" | "rejected"
     }
@@ -661,6 +725,7 @@ export const Constants = {
         "social",
         "other",
       ],
+      club_role: ["president", "secretary", "member", "faculty_coordinator"],
       event_status: ["upcoming", "ongoing", "completed", "cancelled"],
       membership_status: ["pending", "active", "rejected"],
     },
