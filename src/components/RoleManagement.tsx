@@ -88,6 +88,13 @@ const RoleManagement = ({ clubId }: RoleManagementProps) => {
 
   const updateRole = async (userId: string, newRole: 'president' | 'secretary' | 'faculty_coordinator' | 'member') => {
     try {
+      // Validate role
+      const validRoles = ['president', 'secretary', 'faculty_coordinator', 'member'];
+      if (!validRoles.includes(newRole)) {
+        toast.error('Invalid role selected');
+        return;
+      }
+
       const { error } = await supabase
         .from('club_roles')
         .update({ role: newRole })

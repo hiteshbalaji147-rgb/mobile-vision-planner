@@ -18,7 +18,10 @@ async function verifyQRCode(qrData: string): Promise<{ registrationId: string; t
     const payload = `${registrationId}:${timestamp}:${expiresAt}`;
     
     // Verify signature
-    const secret = Deno.env.get("QR_SECRET") || "default-secret-change-in-production";
+    const secret = Deno.env.get("QR_SECRET");
+    if (!secret) {
+      throw new Error("QR_SECRET is not configured");
+    }
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
       "raw",

@@ -61,7 +61,19 @@ const ClubDetail = () => {
 
     if (clubData) {
       setClub(clubData);
-      setIsLeader(user?.id === clubData.created_by);
+      
+      // Check leadership using club_roles table
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('club_roles')
+          .select('role')
+          .eq('club_id', clubId)
+          .eq('user_id', user.id)
+          .in('role', ['president', 'secretary', 'faculty_coordinator'])
+          .maybeSingle();
+        
+        setIsLeader(!!roleData);
+      }
     }
 
     // Fetch events
