@@ -10,7 +10,7 @@ const corsHeaders = {
 async function signQRCode(data: string): Promise<string> {
   const secret = Deno.env.get("QR_SECRET");
   if (!secret) {
-    throw new Error("QR_SECRET is not configured");
+    throw new Error("QR_SECRET not configured");
   }
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
