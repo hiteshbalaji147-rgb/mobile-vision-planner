@@ -55,45 +55,52 @@ const Chatbot = () => {
     let assistantContent = "";
 
     try {
+      const processLine = (raw: string) => {
+        let line = raw.trim();
+        if (!line || line.startsWith(":")) return; // comments/keepalive
+        if (line.startsWith("data: ")) line = line.slice(6).trim();
+        if (line === "[DONE]") return;
+        if (line.endsWith(",")) line = line.slice(0, -1); // handle trailing comma delimiters
+        if (!line) return;
+        try {
+          const parsed = JSON.parse(line);
+          const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text
+            ?? parsed?.candidates?.[0]?.delta?.text
+            ?? parsed?.content?.parts?.[0]?.text;
+          if (typeof text === "string" && text.length) {
+            assistantContent += text;
+            setMessages((prev) => {
+              const last = prev[prev.length - 1];
+              if (last?.role === "assistant") {
+                return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantContent } : m));
+              }
+              return [...prev, { role: "assistant", content: assistantContent }];
+            });
+          }
+        } catch {
+          // Incomplete JSON across chunks; re-buffer and await more data
+          textBuffer = line + "\n" + textBuffer;
+        }
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
+        
         textBuffer += decoder.decode(value, { stream: true });
 
         let newlineIndex: number;
         while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
+          const rawLine = textBuffer.slice(0, newlineIndex);
           textBuffer = textBuffer.slice(newlineIndex + 1);
+          processLine(rawLine);
+        }
+      }
 
-          line = line.trim();
-          if (!line || line.startsWith(":")) continue; // comments/keepalive
-          if (line.startsWith("data: ")) line = line.slice(6).trim();
-
-          if (line === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(line);
-            // Google streamGenerateContent payloads often include candidates with parts.text
-            const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text
-              ?? parsed?.candidates?.[0]?.delta?.text
-              ?? parsed?.content?.parts?.[0]?.text;
-
-            if (typeof text === "string" && text.length) {
-              assistantContent += text;
-              setMessages((prev) => {
-                const last = prev[prev.length - 1];
-                if (last?.role === "assistant") {
-                  return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantContent } : m));
-                }
-                return [...prev, { role: "assistant", content: assistantContent }];
-              });
-            }
-          } catch {
-            // Incomplete JSON across chunks; re-buffer and await more data
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
+      // Final flush for any remaining buffered content
+      if (textBuffer.trim()) {
+        for (const raw of textBuffer.split("\n")) {
+          processLine(raw);
         }
       }
     } finally {
