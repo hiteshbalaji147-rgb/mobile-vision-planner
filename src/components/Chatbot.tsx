@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -24,12 +25,16 @@ const Chatbot = () => {
 
   const streamChat = async (userMessages: Message[]) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (session?.access_token) {
+      headers.Authorization = `Bearer ${session.access_token}`;
+    }
     
     const resp = await fetch(CHAT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({ messages: userMessages }),
     });
 
@@ -38,42 +43,56 @@ const Chatbot = () => {
         const errorData = await resp.json();
         throw new Error(errorData.error);
       }
+      if (resp.status === 401) {
+        throw new Error("Please log in to use the assistant.");
+      }
       throw new Error("Failed to start stream");
     }
 
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
+    let textBuffer = "";
     let assistantContent = "";
 
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        
-        for (const line of lines) {
-          if (!line.trim() || line.startsWith(':')) continue;
-          
+
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          line = line.trim();
+          if (!line || line.startsWith(":")) continue; // comments/keepalive
+          if (line.startsWith("data: ")) line = line.slice(6).trim();
+
+          if (line === "[DONE]") break;
+
           try {
             const parsed = JSON.parse(line);
-            const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-            
-            if (text) {
+            // Google streamGenerateContent payloads often include candidates with parts.text
+            const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text
+              ?? parsed?.candidates?.[0]?.delta?.text
+              ?? parsed?.content?.parts?.[0]?.text;
+
+            if (typeof text === "string" && text.length) {
               assistantContent += text;
               setMessages((prev) => {
                 const last = prev[prev.length - 1];
                 if (last?.role === "assistant") {
-                  return prev.map((m, i) =>
-                    i === prev.length - 1 ? { ...m, content: assistantContent } : m
-                  );
+                  return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantContent } : m));
                 }
                 return [...prev, { role: "assistant", content: assistantContent }];
               });
             }
           } catch {
-            // Skip invalid JSON chunks
+            // Incomplete JSON across chunks; re-buffer and await more data
+            textBuffer = line + "\n" + textBuffer;
+            break;
           }
         }
       }
