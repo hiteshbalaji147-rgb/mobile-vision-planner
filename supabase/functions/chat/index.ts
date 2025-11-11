@@ -33,32 +33,22 @@ serve(async (req) => {
     }
 
     const { messages } = validationResult.data;
-    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
-    if (!GOOGLE_AI_API_KEY) throw new Error("GOOGLE_AI_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Convert messages to Gemini format
-    const geminiMessages = messages.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
-    }));
-
-    // Add system instruction as first user message if needed
-    const systemInstruction = "You are a helpful assistant for ClubTuner, a college club management app. Help users find clubs, discover events, and navigate the platform. Be friendly and concise.";
-    
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?key=${GOOGLE_AI_API_KEY}`, {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        contents: [
-          { role: 'user', parts: [{ text: systemInstruction }] },
-          ...geminiMessages
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: "You are a helpful assistant for ClubTuner, a college club management app. Help users find clubs, discover events, and navigate the platform. Be friendly and concise." },
+          ...messages
         ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        }
+        stream: true,
       }),
     });
 

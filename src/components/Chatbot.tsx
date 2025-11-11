@@ -60,13 +60,10 @@ const Chatbot = () => {
         if (!line || line.startsWith(":")) return; // comments/keepalive
         if (line.startsWith("data: ")) line = line.slice(6).trim();
         if (line === "[DONE]") return;
-        if (line.endsWith(",")) line = line.slice(0, -1); // handle trailing comma delimiters
         if (!line) return;
         try {
           const parsed = JSON.parse(line);
-          const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text
-            ?? parsed?.candidates?.[0]?.delta?.text
-            ?? parsed?.content?.parts?.[0]?.text;
+          const text = parsed?.choices?.[0]?.delta?.content;
           if (typeof text === "string" && text.length) {
             assistantContent += text;
             setMessages((prev) => {
