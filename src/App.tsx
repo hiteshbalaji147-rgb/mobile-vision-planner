@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Leaderboard from "./pages/Leaderboard";
 import MultiClubDashboard from "./pages/MultiClubDashboard";
 import ClubAnalytics from "./pages/ClubAnalytics";
+import ClubManagement from "./pages/ClubManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/clubs" element={<ProtectedRoute><Clubs /></ProtectedRoute>} />
             <Route path="/clubs/:clubId" element={<ProtectedRoute><ClubDetail /></ProtectedRoute>} />
             <Route path="/clubs/:clubId/analytics" element={<ProtectedRoute><ClubAnalytics /></ProtectedRoute>} />
+            <Route path="/club-management" element={<ProtectedRoute><ClubManagement /></ProtectedRoute>} />
             <Route path="/manage-clubs" element={<ProtectedRoute><MultiClubDashboard /></ProtectedRoute>} />
             <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
             <Route path="/events/:eventId" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />

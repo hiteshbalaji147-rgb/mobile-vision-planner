@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, Users, CheckCircle2 } from 'lucide-react';
+import { Search, Users, CheckCircle2, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -33,13 +33,28 @@ const Clubs = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [canManageClubs, setCanManageClubs] = useState(false);
 
   useEffect(() => {
     fetchClubs();
     if (user) {
       fetchMemberships();
+      checkManagePermission();
     }
   }, [selectedCategory, user]);
+
+  const checkManagePermission = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'club_leader'])
+      .maybeSingle();
+    
+    setCanManageClubs(!!data);
+  };
 
   const fetchClubs = async () => {
     setLoading(true);
@@ -82,7 +97,16 @@ const Clubs = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="bg-gradient-to-br from-primary to-primary-dark text-primary-foreground p-6 rounded-b-3xl shadow-xl">
-        <h1 className="text-3xl font-bold mb-4">Clubs Directory</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold">Clubs Directory</h1>
+          {canManageClubs && (
+            <Link to="/club-management">
+              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/20">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
+        </div>
         
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
