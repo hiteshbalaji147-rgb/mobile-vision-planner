@@ -167,11 +167,11 @@ const ClubDetail = () => {
   return (
     <div className="min-h-screen bg-background pb-6">
       {club.banner_url && (
-        <div className="h-48 overflow-hidden">
+        <div className="relative w-full h-48 sm:h-56 md:h-64 overflow-hidden bg-muted">
           <img 
             src={club.banner_url} 
             alt={club.name}
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-center"
           />
         </div>
       )}
