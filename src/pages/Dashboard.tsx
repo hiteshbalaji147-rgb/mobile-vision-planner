@@ -111,7 +111,7 @@ const Dashboard = () => {
               <Code2 className="h-5 w-5" />
               Hackathons
             </h2>
-            <Link to="/events">
+            <Link to="/hackathons">
               <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
                 See all
               </Button>

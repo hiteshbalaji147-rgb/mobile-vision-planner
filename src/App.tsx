@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Leaderboard from "./pages/Leaderboard";
+import Hackathons from "./pages/Hackathons";
 import MultiClubDashboard from "./pages/MultiClubDashboard";
 import ClubAnalytics from "./pages/ClubAnalytics";
 import ClubManagement from "./pages/ClubManagement";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+            <Route path="/hackathons" element={<ProtectedRoute><Hackathons /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Chatbot />
