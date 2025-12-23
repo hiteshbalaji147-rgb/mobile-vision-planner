@@ -7,6 +7,7 @@ import { Calendar, MapPin, Trophy, Code2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CountdownTimer } from '@/components/CountdownTimer';
 
 interface Event {
   id: string;
@@ -112,6 +113,12 @@ const Hackathons = () => {
                         <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                           {hackathon.description}
                         </p>
+                      )}
+                      {activeTab === 'upcoming' && (
+                        <div className="mb-3 p-2 bg-muted/50 rounded-lg">
+                          <p className="text-xs text-muted-foreground mb-1">Starts in:</p>
+                          <CountdownTimer targetDate={hackathon.event_date} />
+                        </div>
                       )}
                       <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
