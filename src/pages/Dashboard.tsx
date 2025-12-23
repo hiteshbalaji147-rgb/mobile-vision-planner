@@ -5,9 +5,10 @@ import { BottomNav } from '@/components/BottomNav';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Users, Calendar } from 'lucide-react';
+import { Search, Users, Calendar, Code2, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 interface Club {
   id: string;
@@ -21,6 +22,8 @@ interface Event {
   title: string;
   event_date: string;
   venue: string;
+  description: string | null;
+  banner_url: string | null;
   clubs: { name: string };
 }
 
@@ -28,6 +31,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [joinedClubs, setJoinedClubs] = useState<Club[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [hackathons, setHackathons] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -54,7 +58,7 @@ const Dashboard = () => {
     // Fetch upcoming events
     const { data: events } = await supabase
       .from('events')
-      .select('id, title, event_date, venue, clubs(name)')
+      .select('id, title, event_date, venue, description, banner_url, clubs(name)')
       .gte('event_date', new Date().toISOString())
       .order('event_date', { ascending: true })
       .limit(5);
@@ -63,12 +67,25 @@ const Dashboard = () => {
       setUpcomingEvents(events);
     }
 
+    // Fetch hackathons (events with "hackathon" in title or description)
+    const { data: hackathonEvents } = await supabase
+      .from('events')
+      .select('id, title, event_date, venue, description, banner_url, clubs(name)')
+      .gte('event_date', new Date().toISOString())
+      .or('title.ilike.%hackathon%,description.ilike.%hackathon%')
+      .order('event_date', { ascending: true })
+      .limit(5);
+
+    if (hackathonEvents) {
+      setHackathons(hackathonEvents);
+    }
+
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-muted pb-20">
-      {/* Amazon-style Header */}
+      {/* Header */}
       <header className="bg-primary text-primary-foreground shadow-md">
         <div className="p-4">
           <h1 className="text-2xl font-bold mb-3">ClubTuner</h1>
@@ -87,6 +104,65 @@ const Dashboard = () => {
       </header>
 
       <main className="p-4 space-y-6">
+        {/* Hackathons Section */}
+        <section className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg shadow p-4 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Code2 className="h-5 w-5" />
+              Hackathons
+            </h2>
+            <Link to="/events">
+              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                See all
+              </Button>
+            </Link>
+          </div>
+          
+          {loading ? (
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-40 w-64 flex-shrink-0 rounded-lg bg-white/20" />
+              ))}
+            </div>
+          ) : hackathons.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
+              {hackathons.map((hackathon) => (
+                <Link key={hackathon.id} to={`/events/${hackathon.id}`} className="flex-shrink-0 w-64">
+                  <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all h-full">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Trophy className="h-4 w-4 text-yellow-300" />
+                        <Badge variant="secondary" className="bg-yellow-400/20 text-yellow-200 border-0 text-xs">
+                          Hackathon
+                        </Badge>
+                      </div>
+                      <h3 className="font-bold text-white mb-2 line-clamp-2">{hackathon.title}</h3>
+                      <p className="text-sm text-white/80 mb-2">{hackathon.clubs.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-white/70">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(hackathon.event_date).toLocaleDateString('en', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}</span>
+                      </div>
+                      {hackathon.venue && (
+                        <p className="text-xs text-white/60 mt-1 truncate">{hackathon.venue}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <Code2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p className="text-white/80">No upcoming hackathons</p>
+              <p className="text-sm text-white/60 mt-1">Check back later for exciting coding challenges!</p>
+            </div>
+          )}
+        </section>
+
         {/* My Clubs Section */}
         <section className="bg-card rounded-lg shadow p-4">
           <div className="flex items-center justify-between mb-4">
