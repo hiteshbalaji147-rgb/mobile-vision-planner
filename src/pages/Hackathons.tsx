@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
 import { BottomNav } from '@/components/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Trophy, Code2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, MapPin, Trophy, Code2, Users, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CountdownTimer } from '@/components/CountdownTimer';
+import { HackathonTeamDialog } from '@/components/HackathonTeamDialog';
 
 interface Event {
   id: string;
@@ -17,6 +20,7 @@ interface Event {
   status: string;
   description: string | null;
   banner_url: string | null;
+  max_capacity: number | null;
   clubs: { name: string };
 }
 
