@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
 import { BottomNav } from '@/components/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Trophy, Code2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, MapPin, Trophy, Code2, Users, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CountdownTimer } from '@/components/CountdownTimer';
+import { HackathonTeamDialog } from '@/components/HackathonTeamDialog';
 
 interface Event {
   id: string;
@@ -17,17 +20,22 @@ interface Event {
   status: string;
   description: string | null;
   banner_url: string | null;
+  max_capacity: number | null;
   clubs: { name: string };
 }
 
 const Hackathons = () => {
+  const { user } = useAuth();
   const [hackathons, setHackathons] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [registrations, setRegistrations] = useState<Record<string, boolean>>({});
+  const [regCounts, setRegCounts] = useState<Record<string, number>>({});
+  const [teamCounts, setTeamCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchHackathons();
-  }, [activeTab]);
+  }, [activeTab, user]);
 
   const fetchHackathons = async () => {
     setLoading(true);
@@ -48,6 +56,44 @@ const Hackathons = () => {
 
     if (data) {
       setHackathons(data);
+      
+      // Fetch registration counts and team counts
+      const eventIds = data.map((e: any) => e.id);
+      
+      if (eventIds.length > 0) {
+        // Registration counts per event
+        const { data: regData } = await supabase
+          .from('event_registrations')
+          .select('event_id')
+          .in('event_id', eventIds);
+        
+        const counts: Record<string, number> = {};
+        regData?.forEach((r: any) => { counts[r.event_id] = (counts[r.event_id] || 0) + 1; });
+        setRegCounts(counts);
+
+        // Team counts per event
+        const { data: teamData } = await supabase
+          .from('hackathon_teams')
+          .select('event_id')
+          .in('event_id', eventIds);
+        
+        const tCounts: Record<string, number> = {};
+        teamData?.forEach((t: any) => { tCounts[t.event_id] = (tCounts[t.event_id] || 0) + 1; });
+        setTeamCounts(tCounts);
+
+        // User's registrations
+        if (user) {
+          const { data: myRegs } = await supabase
+            .from('event_registrations')
+            .select('event_id')
+            .in('event_id', eventIds)
+            .eq('user_id', user.id);
+          
+          const regMap: Record<string, boolean> = {};
+          myRegs?.forEach((r: any) => { regMap[r.event_id] = true; });
+          setRegistrations(regMap);
+        }
+      }
     }
 
     setLoading(false);
@@ -136,6 +182,26 @@ const Hackathons = () => {
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
                             <span>{hackathon.venue}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          <span>
+                            {regCounts[hackathon.id] || 0} registered
+                            {hackathon.max_capacity && ` / ${hackathon.max_capacity}`}
+                            {teamCounts[hackathon.id] ? ` · ${teamCounts[hackathon.id]} team${teamCounts[hackathon.id] > 1 ? 's' : ''}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        {registrations[hackathon.id] && (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Registered
+                          </Badge>
+                        )}
+                        {activeTab === 'upcoming' && (
+                          <div onClick={(e) => e.preventDefault()}>
+                            <HackathonTeamDialog eventId={hackathon.id} eventTitle={hackathon.title} />
                           </div>
                         )}
                       </div>
