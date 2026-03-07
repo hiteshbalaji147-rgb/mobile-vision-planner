@@ -184,6 +184,26 @@ const Hackathons = () => {
                             <span>{hackathon.venue}</span>
                           </div>
                         )}
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          <span>
+                            {regCounts[hackathon.id] || 0} registered
+                            {hackathon.max_capacity && ` / ${hackathon.max_capacity}`}
+                            {teamCounts[hackathon.id] ? ` · ${teamCounts[hackathon.id]} team${teamCounts[hackathon.id] > 1 ? 's' : ''}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        {registrations[hackathon.id] && (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Registered
+                          </Badge>
+                        )}
+                        {activeTab === 'upcoming' && (
+                          <div onClick={(e) => e.preventDefault()}>
+                            <HackathonTeamDialog eventId={hackathon.id} eventTitle={hackathon.title} />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
