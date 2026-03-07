@@ -25,13 +25,17 @@ interface Event {
 }
 
 const Hackathons = () => {
+  const { user } = useAuth();
   const [hackathons, setHackathons] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [registrations, setRegistrations] = useState<Record<string, boolean>>({});
+  const [regCounts, setRegCounts] = useState<Record<string, number>>({});
+  const [teamCounts, setTeamCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchHackathons();
-  }, [activeTab]);
+  }, [activeTab, user]);
 
   const fetchHackathons = async () => {
     setLoading(true);
@@ -52,6 +56,44 @@ const Hackathons = () => {
 
     if (data) {
       setHackathons(data);
+      
+      // Fetch registration counts and team counts
+      const eventIds = data.map((e: any) => e.id);
+      
+      if (eventIds.length > 0) {
+        // Registration counts per event
+        const { data: regData } = await supabase
+          .from('event_registrations')
+          .select('event_id')
+          .in('event_id', eventIds);
+        
+        const counts: Record<string, number> = {};
+        regData?.forEach((r: any) => { counts[r.event_id] = (counts[r.event_id] || 0) + 1; });
+        setRegCounts(counts);
+
+        // Team counts per event
+        const { data: teamData } = await supabase
+          .from('hackathon_teams')
+          .select('event_id')
+          .in('event_id', eventIds);
+        
+        const tCounts: Record<string, number> = {};
+        teamData?.forEach((t: any) => { tCounts[t.event_id] = (tCounts[t.event_id] || 0) + 1; });
+        setTeamCounts(tCounts);
+
+        // User's registrations
+        if (user) {
+          const { data: myRegs } = await supabase
+            .from('event_registrations')
+            .select('event_id')
+            .in('event_id', eventIds)
+            .eq('user_id', user.id);
+          
+          const regMap: Record<string, boolean> = {};
+          myRegs?.forEach((r: any) => { regMap[r.event_id] = true; });
+          setRegistrations(regMap);
+        }
+      }
     }
 
     setLoading(false);
