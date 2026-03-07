@@ -200,7 +200,7 @@ const Hackathons = () => {
                           </Badge>
                         )}
                         {activeTab === 'upcoming' && (
-                          <div onClick={(e) => e.preventDefault()}>
+                          <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                             <HackathonTeamDialog eventId={hackathon.id} eventTitle={hackathon.title} />
                           </div>
                         )}
