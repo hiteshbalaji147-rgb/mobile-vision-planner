@@ -141,7 +141,7 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm" className="gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <Button variant="secondary" size="sm" className="gap-1.5" onClickCapture={(e) => { e.stopPropagation(); e.preventDefault(); setOpen(true); }}>
           <Users className="h-3.5 w-3.5" />
           Teams
         </Button>
