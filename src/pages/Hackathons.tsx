@@ -168,6 +168,39 @@ const Hackathons = () => {
                           {hackathon.description}
                         </p>
                       )}
+
+                      {/* Prize Pool & Prizes */}
+                      {hackathon.prize_pool && (
+                        <div className="mb-3 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Award className="h-4 w-4 text-amber-600" />
+                            <span className="font-semibold text-sm text-amber-800 dark:text-amber-300">Prize Pool: {hackathon.prize_pool}</span>
+                          </div>
+                          {hackathon.prizes && hackathon.prizes.length > 0 && (
+                            <div className="grid grid-cols-3 gap-2">
+                              {hackathon.prizes.map((p, i) => (
+                                <div key={i} className="text-center p-1.5 bg-white/60 dark:bg-white/5 rounded">
+                                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">{p.place}</p>
+                                  <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{p.prize}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Sponsors */}
+                      {hackathon.sponsors && hackathon.sponsors.length > 0 && (
+                        <div className="mb-3 flex items-center gap-2 flex-wrap">
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Sponsors:</span>
+                          {hackathon.sponsors.map((s) => (
+                            <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">
+                              {s}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                       {activeTab === 'upcoming' && (
                         <div className="mb-3 p-2 bg-muted/50 rounded-lg">
                           <p className="text-xs text-muted-foreground mb-1">Starts in:</p>
