@@ -1,0 +1,1 @@
+CREATE POLICY "Users can update own membership" ON public.hackathon_team_members FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
