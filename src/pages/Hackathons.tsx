@@ -63,7 +63,7 @@ const Hackathons = () => {
     const { data } = await query;
 
     if (data) {
-      setHackathons(data);
+      setHackathons(data as unknown as Event[]);
       
       // Fetch registration counts and team counts
       const eventIds = data.map((e: any) => e.id);
