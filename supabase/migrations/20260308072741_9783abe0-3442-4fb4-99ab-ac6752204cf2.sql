@@ -1,0 +1,1 @@
+ALTER TABLE public.hackathon_team_members ADD COLUMN skills text[] DEFAULT '{}'::text[];
