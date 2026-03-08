@@ -148,6 +148,35 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
     toast({ title: 'Invite code copied!' });
   };
 
+  const addSkill = async () => {
+    const skill = skillInput.trim().toLowerCase();
+    if (!skill || !user || !myTeam || mySkills.includes(skill)) {
+      setSkillInput('');
+      return;
+    }
+    const updated = [...mySkills, skill];
+    setMySkills(updated);
+    setSkillInput('');
+    await supabase
+      .from('hackathon_team_members')
+      .update({ skills: updated } as any)
+      .eq('team_id', myTeam.id)
+      .eq('user_id', user.id);
+    await fetchTeams();
+  };
+
+  const removeSkill = async (skill: string) => {
+    if (!user || !myTeam) return;
+    const updated = mySkills.filter((s) => s !== skill);
+    setMySkills(updated);
+    await supabase
+      .from('hackathon_team_members')
+      .update({ skills: updated } as any)
+      .eq('team_id', myTeam.id)
+      .eq('user_id', user.id);
+    await fetchTeams();
+  };
+
   const memberCount = (team: Team) => team.hackathon_team_members?.length || 0;
 
   return (
