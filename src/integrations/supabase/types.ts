@@ -225,6 +225,9 @@ export type Database = {
           id: string
           max_capacity: number | null
           outlook_event_id: string | null
+          prize_pool: string | null
+          prizes: Json | null
+          sponsors: string[] | null
           status: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at: string
@@ -241,6 +244,9 @@ export type Database = {
           id?: string
           max_capacity?: number | null
           outlook_event_id?: string | null
+          prize_pool?: string | null
+          prizes?: Json | null
+          sponsors?: string[] | null
           status?: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at?: string
@@ -257,6 +263,9 @@ export type Database = {
           id?: string
           max_capacity?: number | null
           outlook_event_id?: string | null
+          prize_pool?: string | null
+          prizes?: Json | null
+          sponsors?: string[] | null
           status?: Database["public"]["Enums"]["event_status"]
           title?: string
           updated_at?: string
