@@ -5,12 +5,17 @@ import { BottomNav } from '@/components/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Trophy, Code2, Users, CheckCircle2 } from 'lucide-react';
+import { Calendar, MapPin, Trophy, Code2, Users, CheckCircle2, Award, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CountdownTimer } from '@/components/CountdownTimer';
 import { HackathonTeamDialog } from '@/components/HackathonTeamDialog';
+
+interface Prize {
+  place: string;
+  prize: string;
+}
 
 interface Event {
   id: string;
@@ -22,6 +27,9 @@ interface Event {
   banner_url: string | null;
   max_capacity: number | null;
   clubs: { name: string };
+  prize_pool: string | null;
+  prizes: Prize[] | null;
+  sponsors: string[] | null;
 }
 
 const Hackathons = () => {
