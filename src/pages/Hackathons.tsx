@@ -5,12 +5,17 @@ import { BottomNav } from '@/components/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Trophy, Code2, Users, CheckCircle2 } from 'lucide-react';
+import { Calendar, MapPin, Trophy, Code2, Users, CheckCircle2, Award, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CountdownTimer } from '@/components/CountdownTimer';
 import { HackathonTeamDialog } from '@/components/HackathonTeamDialog';
+
+interface Prize {
+  place: string;
+  prize: string;
+}
 
 interface Event {
   id: string;
@@ -22,6 +27,9 @@ interface Event {
   banner_url: string | null;
   max_capacity: number | null;
   clubs: { name: string };
+  prize_pool: string | null;
+  prizes: Prize[] | null;
+  sponsors: string[] | null;
 }
 
 const Hackathons = () => {
@@ -55,7 +63,7 @@ const Hackathons = () => {
     const { data } = await query;
 
     if (data) {
-      setHackathons(data);
+      setHackathons(data as unknown as Event[]);
       
       // Fetch registration counts and team counts
       const eventIds = data.map((e: any) => e.id);
@@ -159,6 +167,39 @@ const Hackathons = () => {
                         <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                           {hackathon.description}
                         </p>
+                      )}
+
+                      {/* Prize Pool & Prizes */}
+                      {hackathon.prize_pool && (
+                        <div className="mb-3 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Award className="h-4 w-4 text-amber-600" />
+                            <span className="font-semibold text-sm text-amber-800 dark:text-amber-300">Prize Pool: {hackathon.prize_pool}</span>
+                          </div>
+                          {hackathon.prizes && hackathon.prizes.length > 0 && (
+                            <div className="grid grid-cols-3 gap-2">
+                              {hackathon.prizes.map((p, i) => (
+                                <div key={i} className="text-center p-1.5 bg-white/60 dark:bg-white/5 rounded">
+                                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">{p.place}</p>
+                                  <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{p.prize}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Sponsors */}
+                      {hackathon.sponsors && hackathon.sponsors.length > 0 && (
+                        <div className="mb-3 flex items-center gap-2 flex-wrap">
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Sponsors:</span>
+                          {hackathon.sponsors.map((s) => (
+                            <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">
+                              {s}
+                            </Badge>
+                          ))}
+                        </div>
                       )}
                       {activeTab === 'upcoming' && (
                         <div className="mb-3 p-2 bg-muted/50 rounded-lg">
