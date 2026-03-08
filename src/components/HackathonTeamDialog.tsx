@@ -285,26 +285,37 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
               {teams.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No teams yet. Be the first to create one!</p>
               ) : (
-                teams.map((team) => (
-                  <Card key={team.id}>
-                    <CardContent className="p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-sm">{team.name}</p>
-                          <p className="text-xs text-muted-foreground">{memberCount(team)}/{team.max_members} members</p>
+                teams.map((team) => {
+                  const allSkills = team.hackathon_team_members?.flatMap((m) => m.skills || []) || [];
+                  return (
+                    <Card key={team.id}>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-sm">{team.name}</p>
+                            <p className="text-xs text-muted-foreground">{memberCount(team)}/{team.max_members} members</p>
+                          </div>
+                          {memberCount(team) < team.max_members ? (
+                            <Button size="sm" variant="secondary" onClick={() => { setInviteCode(team.invite_code); joinByCode(); }}>
+                              Join
+                            </Button>
+                          ) : (
+                            <Badge variant="outline">Full</Badge>
+                          )}
                         </div>
-                        {memberCount(team) < team.max_members && (
-                      {memberCount(team) < team.max_members && (
-                        <Button size="sm" variant="secondary" onClick={() => { setInviteCode(team.invite_code); joinByCode(); }}>
-                          Join
-                        </Button>
-                      )}
-                      {memberCount(team) >= team.max_members && (
-                        <Badge variant="outline">Full</Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
+                        {allSkills.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {[...new Set(allSkills)].map((s) => (
+                              <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">
+                                {s}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </TabsContent>
 
