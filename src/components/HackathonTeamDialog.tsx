@@ -11,7 +11,13 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Users, Plus, Link as LinkIcon, Copy, UserPlus, LogOut } from 'lucide-react';
+import { Users, Plus, Link as LinkIcon, Copy, UserPlus, LogOut, X, Tag } from 'lucide-react';
+
+interface TeamMember {
+  user_id: string;
+  skills: string[] | null;
+  profiles: { full_name: string; avatar_url: string | null };
+}
 
 interface Team {
   id: string;
@@ -20,7 +26,7 @@ interface Team {
   max_members: number;
   invite_code: string;
   created_by: string;
-  hackathon_team_members: { user_id: string; profiles: { full_name: string; avatar_url: string | null } }[];
+  hackathon_team_members: TeamMember[];
 }
 
 interface HackathonTeamDialogProps {
@@ -39,6 +45,8 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [myTeam, setMyTeam] = useState<Team | null>(null);
+  const [skillInput, setSkillInput] = useState('');
+  const [mySkills, setMySkills] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) fetchTeams();
@@ -47,7 +55,7 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
   const fetchTeams = async () => {
     const { data } = await supabase
       .from('hackathon_teams')
-      .select('*, hackathon_team_members(user_id, profiles(full_name, avatar_url))')
+      .select('*, hackathon_team_members(user_id, skills, profiles(full_name, avatar_url))')
       .eq('event_id', eventId);
 
     if (data) {
@@ -57,6 +65,10 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
           t.hackathon_team_members?.some((m: any) => m.user_id === user.id)
         );
         setMyTeam((found as unknown as Team) || null);
+        if (found) {
+          const myMember = (found as any).hackathon_team_members?.find((m: any) => m.user_id === user.id);
+          setMySkills(myMember?.skills || []);
+        }
       }
     }
   };
@@ -136,6 +148,35 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
     toast({ title: 'Invite code copied!' });
   };
 
+  const addSkill = async () => {
+    const skill = skillInput.trim().toLowerCase();
+    if (!skill || !user || !myTeam || mySkills.includes(skill)) {
+      setSkillInput('');
+      return;
+    }
+    const updated = [...mySkills, skill];
+    setMySkills(updated);
+    setSkillInput('');
+    await supabase
+      .from('hackathon_team_members')
+      .update({ skills: updated } as any)
+      .eq('team_id', myTeam.id)
+      .eq('user_id', user.id);
+    await fetchTeams();
+  };
+
+  const removeSkill = async (skill: string) => {
+    if (!user || !myTeam) return;
+    const updated = mySkills.filter((s) => s !== skill);
+    setMySkills(updated);
+    await supabase
+      .from('hackathon_team_members')
+      .update({ skills: updated } as any)
+      .eq('team_id', myTeam.id)
+      .eq('user_id', user.id);
+    await fetchTeams();
+  };
+
   const memberCount = (team: Team) => team.hackathon_team_members?.length || 0;
 
   return (
@@ -163,11 +204,50 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
                   <Badge variant="secondary">{memberCount(myTeam)}/{myTeam.max_members}</Badge>
                 </div>
                 {myTeam.description && <p className="text-sm text-muted-foreground">{myTeam.description}</p>}
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <p className="text-xs text-muted-foreground font-medium">Members</p>
                   {myTeam.hackathon_team_members.map((m) => (
-                    <p key={m.user_id} className="text-sm">{m.profiles.full_name}</p>
+                    <div key={m.user_id} className="space-y-1">
+                      <p className="text-sm font-medium">{m.profiles.full_name}</p>
+                      {m.skills && m.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {m.skills.map((s) => (
+                            <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">
+                              {s}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <Tag className="h-3 w-3" /> My Skills
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {mySkills.map((s) => (
+                      <Badge key={s} variant="secondary" className="text-xs gap-1">
+                        {s}
+                        <button onClick={() => removeSkill(s)} className="hover:text-destructive">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. React, Python, UI/UX"
+                      value={skillInput}
+                      onChange={(e) => setSkillInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                      className="h-8 text-sm"
+                      maxLength={30}
+                    />
+                    <Button size="sm" variant="outline" onClick={addSkill} disabled={!skillInput.trim()} className="h-8">
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-muted rounded px-3 py-1.5 text-sm font-mono">{myTeam.invite_code}</div>
@@ -205,24 +285,37 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
               {teams.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No teams yet. Be the first to create one!</p>
               ) : (
-                teams.map((team) => (
-                  <Card key={team.id}>
-                    <CardContent className="p-3 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{team.name}</p>
-                        <p className="text-xs text-muted-foreground">{memberCount(team)}/{team.max_members} members</p>
-                      </div>
-                      {memberCount(team) < team.max_members && (
-                        <Button size="sm" variant="secondary" onClick={() => { setInviteCode(team.invite_code); joinByCode(); }}>
-                          Join
-                        </Button>
-                      )}
-                      {memberCount(team) >= team.max_members && (
-                        <Badge variant="outline">Full</Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
+                teams.map((team) => {
+                  const allSkills = team.hackathon_team_members?.flatMap((m) => m.skills || []) || [];
+                  return (
+                    <Card key={team.id}>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-sm">{team.name}</p>
+                            <p className="text-xs text-muted-foreground">{memberCount(team)}/{team.max_members} members</p>
+                          </div>
+                          {memberCount(team) < team.max_members ? (
+                            <Button size="sm" variant="secondary" onClick={() => { setInviteCode(team.invite_code); joinByCode(); }}>
+                              Join
+                            </Button>
+                          ) : (
+                            <Badge variant="outline">Full</Badge>
+                          )}
+                        </div>
+                        {allSkills.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {[...new Set(allSkills)].map((s) => (
+                              <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">
+                                {s}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </TabsContent>
 
