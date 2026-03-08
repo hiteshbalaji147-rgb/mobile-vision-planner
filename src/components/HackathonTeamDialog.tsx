@@ -11,7 +11,13 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Users, Plus, Link as LinkIcon, Copy, UserPlus, LogOut } from 'lucide-react';
+import { Users, Plus, Link as LinkIcon, Copy, UserPlus, LogOut, X, Tag } from 'lucide-react';
+
+interface TeamMember {
+  user_id: string;
+  skills: string[] | null;
+  profiles: { full_name: string; avatar_url: string | null };
+}
 
 interface Team {
   id: string;
@@ -20,7 +26,7 @@ interface Team {
   max_members: number;
   invite_code: string;
   created_by: string;
-  hackathon_team_members: { user_id: string; profiles: { full_name: string; avatar_url: string | null } }[];
+  hackathon_team_members: TeamMember[];
 }
 
 interface HackathonTeamDialogProps {
