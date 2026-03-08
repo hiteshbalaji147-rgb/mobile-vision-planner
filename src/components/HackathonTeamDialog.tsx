@@ -204,11 +204,50 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
                   <Badge variant="secondary">{memberCount(myTeam)}/{myTeam.max_members}</Badge>
                 </div>
                 {myTeam.description && <p className="text-sm text-muted-foreground">{myTeam.description}</p>}
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <p className="text-xs text-muted-foreground font-medium">Members</p>
                   {myTeam.hackathon_team_members.map((m) => (
-                    <p key={m.user_id} className="text-sm">{m.profiles.full_name}</p>
+                    <div key={m.user_id} className="space-y-1">
+                      <p className="text-sm font-medium">{m.profiles.full_name}</p>
+                      {m.skills && m.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {m.skills.map((s) => (
+                            <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">
+                              {s}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <Tag className="h-3 w-3" /> My Skills
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {mySkills.map((s) => (
+                      <Badge key={s} variant="secondary" className="text-xs gap-1">
+                        {s}
+                        <button onClick={() => removeSkill(s)} className="hover:text-destructive">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. React, Python, UI/UX"
+                      value={skillInput}
+                      onChange={(e) => setSkillInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                      className="h-8 text-sm"
+                      maxLength={30}
+                    />
+                    <Button size="sm" variant="outline" onClick={addSkill} disabled={!skillInput.trim()} className="h-8">
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-muted rounded px-3 py-1.5 text-sm font-mono">{myTeam.invite_code}</div>
