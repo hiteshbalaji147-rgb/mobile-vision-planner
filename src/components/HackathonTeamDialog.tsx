@@ -45,6 +45,8 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [myTeam, setMyTeam] = useState<Team | null>(null);
+  const [skillInput, setSkillInput] = useState('');
+  const [mySkills, setMySkills] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) fetchTeams();
