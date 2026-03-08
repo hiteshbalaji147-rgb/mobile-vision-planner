@@ -287,11 +287,13 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
               ) : (
                 teams.map((team) => (
                   <Card key={team.id}>
-                    <CardContent className="p-3 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{team.name}</p>
-                        <p className="text-xs text-muted-foreground">{memberCount(team)}/{team.max_members} members</p>
-                      </div>
+                    <CardContent className="p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{team.name}</p>
+                          <p className="text-xs text-muted-foreground">{memberCount(team)}/{team.max_members} members</p>
+                        </div>
+                        {memberCount(team) < team.max_members && (
                       {memberCount(team) < team.max_members && (
                         <Button size="sm" variant="secondary" onClick={() => { setInviteCode(team.invite_code); joinByCode(); }}>
                           Join
