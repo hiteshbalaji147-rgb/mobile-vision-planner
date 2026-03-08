@@ -55,7 +55,7 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
   const fetchTeams = async () => {
     const { data } = await supabase
       .from('hackathon_teams')
-      .select('*, hackathon_team_members(user_id, profiles(full_name, avatar_url))')
+      .select('*, hackathon_team_members(user_id, skills, profiles(full_name, avatar_url))')
       .eq('event_id', eventId);
 
     if (data) {
@@ -65,6 +65,10 @@ export const HackathonTeamDialog = ({ eventId, eventTitle }: HackathonTeamDialog
           t.hackathon_team_members?.some((m: any) => m.user_id === user.id)
         );
         setMyTeam((found as unknown as Team) || null);
+        if (found) {
+          const myMember = (found as any).hackathon_team_members?.find((m: any) => m.user_id === user.id);
+          setMySkills(myMember?.skills || []);
+        }
       }
     }
   };
